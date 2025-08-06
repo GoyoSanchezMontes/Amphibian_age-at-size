@@ -64,6 +64,8 @@ predict_age <- data.frame(
   Linf_lower = numeric(),
   Linf_upper = numeric(),
   k = numeric(),
+  k_lower = numeric(),
+  k_upper = numeric(),
   stringsAsFactors = FALSE
 )
 
@@ -86,7 +88,7 @@ for (sp in params[params$knownage_sex!="","species"]) {
   miniset<-data.frame(Species=rep(sp,5*length(numsex)),Sex=rep(numsex,each=5),
                       age_days=rep(c(300,665,1030,1395,1760),length(numsex)),
                       SVL_pred=NA,SVL_pred_lower=NA,SVL_pred_upper=NA,Linf=NA,
-                      Linf_lower=NA,Linf_upper=NA,k=NA)
+                      Linf_lower=NA,Linf_upper=NA,k=NA,k_lower=NA,k_upper=NA)
   predict_age<-rbind(predict_age,miniset)
 }
 
@@ -173,6 +175,18 @@ for (sp in unique(age_certain_filtered$Species)) {
         predict_age[predict_age$Species==sp & predict_age$Sex==sex,"Linf_lower"]<-Linf.pred[,"Sim.2.5%"]
         predict_age[predict_age$Species==sp & predict_age$Sex==sex,"Linf_upper"]<-Linf.pred[,"Sim.97.5%"]
         predict_age[predict_age$Species==sp & predict_age$Sex==sex,"k"]<-K
+        
+        nsim <- 10000
+        coefs <- coef(fit1)
+        vc <- vcov(fit1)
+        
+        param_sim <- mvrnorm(n = nsim, mu = coefs, Sigma = vc)  # Multivariate parameter simulation
+        
+        K_sim <- param_sim[, "K"]  # Extract simulated K and calculate 95% CI
+        K_IC <- quantile(K_sim, probs = c(0.025, 0.975))
+        
+        predict_age[predict_age$Species == sp & predict_age$Sex == sex, "k_lower"] <- K_IC[1]
+        predict_age[predict_age$Species == sp & predict_age$Sex == sex, "k_upper"] <- K_IC[2]
       }
       
     }
