@@ -1,11 +1,11 @@
 species,neg_gr_thr,max_dsvl_thr,min_temp_thr,Met_size,tmax,Linf_init,k_init,C_init,ts_init,max_size_age,models_to_test,exclude_juvs,exclude_unknown_sex,knownage_pops,knownage_sex,modelpred,refpop
-Alytes cisternasii,-3,,,22,6570,45,0.002,500,600,5,VB+Logistic,yes,yes,separated,pooled,recaptures,Gravera
-Alytes obstetricans,-3,,,15,6570,45,0.002,500,600,10,VB+Logistic,yes,yes,pooled,pooled,knownage,pooled
-Bufo spinosus,-3,,,12,6570,110,0.002,500,500,5,VB+Logistic,yes,yes,separated,males,recaptures,Fuente_del_Valle
-Epidalea calamita,-3,,,12,6570,80,0.002,500,600,15,VB+Logistic,yes,yes,pooled,pooled,recaptures,Laguna
-Discoglossus galganoi,-3,,,18,3650,78,0.002,500,600,7,VB+Logistic,yes,yes,separated,,,
-Hyla molleri,-2,,,18,2555,55,0.002,500,600,5,VB+Logistic,yes,yes,pooled,males,recaptures,Laguna
-Pelobates cultripes,-3,5,100,32,6570,90,0.002,500,600,15,VB+Logistic,yes,yes,pooled,,recaptures,Laguna
-Pleurodeles waltl,-3,,,32,9125,125,0.002,500,600,15,VB+Logistic,yes,yes,pooled,pooled,knownage,pooled
-Pelophylax perezi,-3,,,19,3650,70,0.002,500,600,7,VB+Logistic,yes,yes,pooled,males+females,knownage,pooled
+Alytes cisternasii,-3,,,23,6570,45,0.002,500,600,5,VB+Logistic,yes,yes,separated,pooled,recaptures,Gravera
+Alytes obstetricans,-3,,,16,6570,45,0.002,500,600,10,VB+Logistic,yes,yes,pooled,pooled,knownage,pooled
+Bufo spinosus,-3,,,11,6570,110,0.002,500,500,5,VB+Logistic,yes,yes,separated,males,recaptures,Fuente_del_Valle
+Epidalea calamita,-3,,,14,6570,80,0.002,500,600,15,VB+Logistic,yes,yes,pooled,pooled,recaptures,Laguna
+Discoglossus galganoi,-3,,,22,3650,78,0.002,500,600,7,VB+Logistic,yes,yes,separated,,,
+Hyla molleri,-2,,,22,2555,55,0.002,500,600,5,VB+Logistic,yes,yes,pooled,males,recaptures,Laguna
+Pelobates cultripes,-3,5,100,33,6570,90,0.002,500,600,15,VB+Logistic,yes,yes,pooled,,recaptures,Laguna
+Pleurodeles waltl,-3,,,41,9125,125,0.002,500,600,15,VB+Logistic,yes,yes,pooled,pooled,knownage,pooled
+Pelophylax perezi,-3,,,25,3650,70,0.002,500,600,7,VB+Logistic,yes,yes,pooled,males+females,knownage,pooled
 Triturus marmoratus,-3,,,28,5475,80,0.002,500,600,15,VB+Logistic,yes,yes,separated,,,
