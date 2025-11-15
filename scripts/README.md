@@ -10,7 +10,7 @@ The file 'Growth_recaptures.csv' contains a dataset of repeated body size measur
 10 amphibian species studied in a long-term monitoring program in central Spain.
 
 The file 'models.csv' contains a list of different growth function models that can be applied to repeated body size measures of identified
-individuals. These models correspond to four broad model formulations: von-Bertalanffy, Logistic, Schnute and Seasonal.
+individuals. These models correspond to four broad model formulations: von-Bertalanffy (coded as VB), Logistic, Schnute and Seasonal.
 
 The file 'age_certain.csv' contains body size measures of individuals of known age, given the date of the measurement record and the estimated
 date of metamorphosis.
@@ -32,8 +32,7 @@ following columns:
 9) C_init: the initial value for the specific C parameter in seasonal growth models.
 10) ts_init: : the initial value for the specific ts parameter in seasonal growth models.
 11) max_size_age: the maximum age used for visualization as horizontal axis in model graphs.
-12) models_to_test: the capture-mark-recapture models to be tested, separated with a '+' character. Four possible models: von-Bertalanffy (VB),
-    Logistic, Schnute and Seasonal (Sommers).
+12) models_to_test: the capture-mark-recapture models to be tested, separated with a '+' character. Four possible models: von-Bertalanffy (coded as VB), Logistic, Schnute and Seasonal.
 13) exclude_juvs: whether to exclude juveniles from capture-mark-recapture models in the model comparison step of script 01 (yes/no).
 14) exclude_unknown_sex: whether to exclude individuals of unknown sex from capture-mark-recapture models in the model comparison step
     of script 01 (yes/no).
