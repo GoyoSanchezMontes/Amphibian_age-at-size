@@ -45,7 +45,7 @@ for (id in unique(age_certain[age_certain$ID!="","ID"])) {
 params<-read.csv("specific_parameters.csv")
 
 for (sp in unique(age_certain_filtered$Species)) {
-  if (params[params$species==sp,"knownage_pops"]=="pooled") {
+  if (params[params$species==sp,"knownage_pops"]=="Pooled") {
     age_certain_filtered[age_certain_filtered$Species==sp,"Pop"]<-"Pooled"
   }
 }
@@ -126,17 +126,17 @@ for (sp in unique(age_certain_filtered$Species)) {
            col=mycol[mycol$Sex %in% unique(age_certain_filt_sp_pop$Sex),"Col"],
            pch=16, bty="n",cex=2)
     
-    for (sex in c("females","males","pooled")) {
+    for (sex in c("Female","Male","Pooled")) {
       
       if (sex %in% unlist(strsplit(params[params$species==sp,"knownage_sex"],"+",fixed=T))) {
         
-        if (sex=="females") {
+        if (sex=="Female") {
           subsetdata<-age_certain_filt_sp_pop[(age_certain_filt_sp_pop$Sex=="Female" | 
                                                  age_certain_filt_sp_pop$Sex=="Juvenile"),]
           colsex<-"firebrick"
         }
         
-        else if (sex=="males") {
+        else if (sex=="Male") {
           subsetdata<-age_certain_filt_sp_pop[(age_certain_filt_sp_pop$Sex=="Male" | 
                                                  age_certain_filt_sp_pop$Sex=="Juvenile"),]
           colsex<-"steelblue"
@@ -148,9 +148,9 @@ for (sp in unique(age_certain_filtered$Species)) {
         }
         
         subsetdata$age<-round(subsetdata$age)
-        vb1 <- vbFuns()
+        vb1 <- makeGrowthFun()
         fit1 <- nls(SVL~vb1(age,Linf,K,t0),data=subsetdata,
-                    start=vbStarts(SVL~age,data=subsetdata,type="typical"),
+                    start=findGrowthStarts(SVL~age,data=subsetdata,type="von Bertalanffy"),
                     control = nls.control(maxiter = 1000))
         Linf <- coef(fit1)[1]
         K <- coef(fit1)[2]

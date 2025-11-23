@@ -1,6 +1,7 @@
 # 1) RUN THE GENERAL MODELS FOR EACH SPECIES
 
 library(nlme)
+library(MuMIn)
 
 rm(list = ls())
 
@@ -12,6 +13,7 @@ params<-read.csv("specific_parameters.csv")
 model_comparison <- data.frame(matrix(ncol = length(unique(unlist(strsplit(unique(params$models_to_test),split="+",fixed=TRUE))))+2, nrow = length(unique(dataset$species))))
 colnames(model_comparison) <- c("Species",unique(unlist(strsplit(unique(params$models_to_test),split="+",fixed=TRUE))),"Bestmodel")
 model_comparison$Species<-unique(dataset$species)
+simple2complex<-c("VB","Logistic","Schnute","Seasonal")
 
 for (species in unique(dataset$species)) {
   sp <- species
@@ -82,8 +84,8 @@ for (species in unique(dataset$species)) {
 
   #################  Seasonal Oscillatory, Appledoorn, 1987  ##################
   
-  if ("Sommers" %in% unlist(strsplit(params[params$species==sp,]$models_to_test,split="+",fixed=T))) {
-      Sommers<-nlme(svl2~svl1+(Linf-svl1)*(1-exp(-k*d+(0.5*(C*k*sin((2*pi/365)*(t1-ts)))*pi^-1)-(0.5*(C*k*sin((2*pi/365)*(t2-ts)))*pi^-1))),
+  if ("Seasonal" %in% unlist(strsplit(params[params$species==sp,]$models_to_test,split="+",fixed=T))) {
+      Seasonal<-nlme(svl2~svl1+(Linf-svl1)*(1-exp(-k*d+(0.5*(C*k*sin((2*pi/365)*(t1-ts)))*pi^-1)-(0.5*(C*k*sin((2*pi/365)*(t2-ts)))*pi^-1))),
                     fixed = list(Linf ~ 1, k ~1, C~1, ts~1),
                     random=Linf~1,
                     data=growth,
@@ -91,13 +93,14 @@ for (species in unique(dataset$species)) {
   }
 
   ###MODEL comparison
-  comparison<-do.call(AIC, lapply(ls()[sapply(ls(), function(x) inherits(get(x), "nlme"))], as.symbol))
-
+  comparison<-do.call(AICc, lapply(ls()[sapply(ls(), function(x) inherits(get(x), "nlme"))], as.symbol))
+  
   for (model in rownames(comparison)) {
-    model_comparison[model_comparison$Species==sp,model]<-comparison[model,]$AIC
-    model_comparison[model_comparison$Species==sp,"Bestmodel"]<-rownames(comparison[comparison$AIC==min(comparison$AIC),])
+    model_comparison[model_comparison$Species==sp,model]<-comparison[model,]$AICc
   }  
-    
+  bestmodels<-comparison[!comparison$AICc>min(comparison$AICc)+2,]
+  model_comparison[model_comparison$Species==sp,"Bestmodel"]<-rownames(bestmodels)[match(simple2complex,rownames(bestmodels),nomatch = 0)][1]
+  
 }
 
 write.csv(model_comparison, "Model_comparison.csv", row.names=F)
@@ -111,7 +114,7 @@ write.csv(model_comparison, "Model_comparison.csv", row.names=F)
 
 allmodels<-read.csv2("models.csv")
 model_selection_table<-data.frame(matrix(ncol = 3, nrow = 0))
-colnames(model_selection_table) <- c("Species", "Model", "AIC")
+colnames(model_selection_table) <- c("Species", "Model", "AICc")
 
 # Create empty dataframes to store the parameters and coefficients
 # of each model
@@ -192,7 +195,7 @@ for (sp in model_comparison$Species) {
     start_param<-strsplit(testmodel,split="_")[[1]][2]
     skip_to_next <- FALSE
     
-    if (bestmodel=="Sommers") {
+    if (bestmodel=="Seasonal") {
         
       fixed_fact_form<-c(as.formula(fixed_fact[1]),as.formula(fixed_fact[2]),
                          as.formula(fixed_fact[3]),as.formula(fixed_fact[4]))
@@ -252,10 +255,10 @@ for (sp in model_comparison$Species) {
     }
     
     newmodel<-data.frame(matrix(ncol = 3, nrow = 1))
-    colnames(newmodel) <- c("Species", "Model", "AIC")
+    colnames(newmodel) <- c("Species", "Model", "AICc")
     newmodel$Species<-sp
     newmodel$Model<-testmodel
-    newmodel$AIC<-AIC(summary(model.n))
+    newmodel$AICc<-AICc(model.n)
     model_selection_table<-rbind(model_selection_table,newmodel)
     
     model_sum<-summary(model.n)
@@ -276,6 +279,8 @@ for (sp in model_comparison$Species) {
 
 }
 
+model_selection_table<-model_selection_table[order(model_selection_table$Species,model_selection_table$AICc),]
+
 write.csv(model_selection_table, "Model_selection_table.csv", row.names=F)
 write.csv(model_param_table, "model_param_table.csv", row.names=F)
 write.csv(model_coef_table, "model_coef_table.csv", row.names=F)
@@ -289,13 +294,22 @@ for (sp in model_comparison$Species) {
   
   data<-subset(dataset,dataset$species==sp)
 
-  selectedmodel<-model_selection_table[model_selection_table$Species==sp &
-                                     model_selection_table$AIC==min(model_selection_table[model_selection_table$Species==sp,"AIC"]),"Model"]
+  model_selection_table_sp <- model_selection_table[model_selection_table$Species==sp,]
+  model_selection_table_sp_bestmodels <- model_selection_table_sp[!model_selection_table_sp$AICc>min(model_selection_table_sp$AICc)+2,]
+  model_selection_table_sp_bestmodels$factors <- sapply( strsplit(model_selection_table_sp_bestmodels$Model, "_"), "[", 2 )
+  model_selection_table_sp_bestmodels$complexity <-
+  sapply(strsplit(gsub("c",0,gsub("s|p",1,gsub("a",2,gsub("i",3,model_selection_table_sp_bestmodels$factors)))),""),function(x) sum(as.numeric(x)))
+  model_selection_table_sp_bestmodels<-
+    model_selection_table_sp_bestmodels[with(model_selection_table_sp_bestmodels, order(complexity, AICc)), ]
+  selectedmodel<-model_selection_table_sp_bestmodels[1,"Model"]
 
   x<-model_coef_table[model_coef_table$Species==sp & model_coef_table$Model==selectedmodel,]
   x<-x[colSums(!is.na(x)) > 0]
 
   dat2<-merge(data, x)
+  dat2$date1_as_date<-as.Date(dat2$date1, format="%d/%m/%Y")
+  dat2<-dat2[order(dat2$id,dat2$date1_as_date),]
+  dat2<-subset(dat2,select=-date1_as_date)
 
   write.csv(dat2, file=paste(gsub(" ","_", sp),"_indiv_growth_param.csv",
                              sep = ""), row.names=F)

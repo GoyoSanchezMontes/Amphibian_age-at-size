@@ -78,6 +78,7 @@ for (sp in spec_params$species) {
   
   allparam_table<-rbind(allparam_table,param_table)
   
+  
 }
 
 write.csv(allparam_table, "allparam_table.csv", row.names=F)
@@ -103,6 +104,8 @@ for (sp in unique(allparam_table$Species)) {
   pops<-sort(unique(param_table$Pop))
 
   indiv_data<-read.csv(paste(gsub(" ","_", sp),"_indiv_growth_param.csv",sep=""))
+  indiv_data$date1<-as.Date(indiv_data$date1,format="%d/%m/%Y")
+  indiv_data$date2<-as.Date(indiv_data$date2,format="%d/%m/%Y")
   indiv_data$Linf<-NA
   indiv_data$k<-NA
   indiv_data$st<-NA
@@ -135,22 +138,29 @@ for (sp in unique(allparam_table$Species)) {
       L1_lower <- Met_size-1
       L1_upper <- Met_size+1
 
-      if (grepl("Sommers",selectedmodel)) {
+      if (grepl("Seasonal",selectedmodel)) {
 
         indiv_data_sex_pop<-indiv_data[indiv_data$pop==p & indiv_data$sex==s,
                                        c("species","Model","pop","sex","id",
                                          "date1","date2","d","t1","t2",
-                                         "svl1","svl2","Linf..Intercept.",
+                                         "svl1","svl2",
                                          "Linf","k","st","std")]
         
-        indiv_data_sex_pop$k<-k
-        indiv_data_sex_pop$st<-(C*k/(2*pi))*sin(2*pi/365*(0 - ts))
-        indiv_data_sex_pop$std<-(C*k/(2*pi))*sin(2*pi/365*(indiv_data_sex_pop$t1 - ts))
-        indiv_data_sex_pop$Linf<-indiv_data_sex_pop$Linf..Intercept.
-        indiv_data_sex_pop$age_est_t1<-
-          ((-log((indiv_data_sex_pop$Linf-indiv_data_sex_pop$svl1)/(indiv_data_sex_pop$Linf-Met_size))+indiv_data_sex_pop$st-indiv_data_sex_pop$std)/indiv_data_sex_pop$k)
-        indiv_data_sex_pop$age_est<-(indiv_data_sex_pop$age_est_t1+indiv_data_sex_pop$d)/365
-        indiv_data_sex_pop<-subset(indiv_data_sex_pop, select=-c(Linf..Intercept.,age_est_t1))
+        if (nrow(indiv_data_sex_pop)>0) {
+          indiv_data_sex_pop$k<-k
+          indiv_data_sex_pop$Linf<-param_table_pop_sex$Linf
+          for (ind in unique(indiv_data_sex_pop$id)) {
+            records<-indiv_data_sex_pop[indiv_data_sex_pop$id==ind,]
+            records$age_est[1]<-
+              ((-log((records$Linf[1]-records$svl1[1])/(records$Linf[1]-Met_size))+records$st[1]-records$std[1])/records$k[1])/365
+            if (nrow(records) > 1) {
+              for (row in 2:nrow(records)) {
+                records$age_est[row]<-records$age_est[row-1]+(records$date1[row]-records$date1[row-1])/365
+              }
+            }
+            indiv_observed_data<-rbind(indiv_observed_data,records)
+          }
+        }
 
         for (i in 1:length(L2)) {
           
@@ -180,18 +190,25 @@ for (sp in unique(allparam_table$Species)) {
         indiv_data_sex_pop<-indiv_data[indiv_data$pop==p & indiv_data$sex==s,
                                        c("species","Model","pop","sex","id",
                                          "date1","date2","d","t1","t2",
-                                         "svl1","svl2","y2..Intercept.",
+                                         "svl1","svl2",
                                          "Linf","k","st","std")]
         
         if (nrow(indiv_data_sex_pop)>0) {
           indiv_data_sex_pop$k<-k
-          indiv_data_sex_pop$Linf<-indiv_data_sex_pop$y2..Intercept.
-          indiv_data_sex_pop$age_est_t1<-
-            (-1/indiv_data_sex_pop$k)*log(1-(log(indiv_data_sex_pop$svl1)-log(Met_size))/(log(indiv_data_sex_pop$Linf)-log(Met_size))*(1-exp(1-indiv_data_sex_pop$k*tmax)))
-          indiv_data_sex_pop$age_est<-(indiv_data_sex_pop$age_est_t1+indiv_data_sex_pop$d)/365
-          indiv_data_sex_pop<-subset(indiv_data_sex_pop, select=-c(y2..Intercept.,age_est_t1))
+          indiv_data_sex_pop$Linf<-param_table_pop_sex$Linf
+          for (ind in unique(indiv_data_sex_pop$id)) {
+            records<-indiv_data_sex_pop[indiv_data_sex_pop$id==ind,]
+            records$age_est[1]<-
+              (-1/records$k[1])*log(1-(log(records$svl1[1])-log(Met_size))/(log(records$Linf[1])-log(Met_size))*(1-exp(1-records$k[1]*tmax)))/365
+            if (nrow(records) > 1) {
+              for (row in 2:nrow(records)) {
+                records$age_est[row]<-records$age_est[row-1]+(records$date1[row]-records$date1[row-1])/365
+              }
+            }
+            indiv_observed_data<-rbind(indiv_observed_data,records)
+          }
         }
-        
+
         for (i in 1:length(L2)) {
           
           T2 <- max(graph_dataset$Days)
@@ -214,16 +231,25 @@ for (sp in unique(allparam_table$Species)) {
         indiv_data_sex_pop<-indiv_data[indiv_data$pop==p & indiv_data$sex==s,
                                        c("species","Model","pop","sex","id",
                                          "date1","date2","d","t1","t2",
-                                         "svl1","svl2","Linf..Intercept.",
+                                         "svl1","svl2",
                                          "Linf","k","st","std")]
-        
-        indiv_data_sex_pop$k<-k
-        indiv_data_sex_pop$Linf<-indiv_data_sex_pop$Linf..Intercept.
-        indiv_data_sex_pop$age_est_t1<-
-          -log(((indiv_data_sex_pop$Linf*Met_size/indiv_data_sex_pop$svl1)-Met_size)/(indiv_data_sex_pop$Linf-Met_size))/indiv_data_sex_pop$k
-        indiv_data_sex_pop$age_est<-(indiv_data_sex_pop$age_est_t1+indiv_data_sex_pop$d)/365
-        indiv_data_sex_pop<-subset(indiv_data_sex_pop, select=-c(Linf..Intercept.,age_est_t1))
 
+        if (nrow(indiv_data_sex_pop)>0) {
+          indiv_data_sex_pop$k<-k
+          indiv_data_sex_pop$Linf<-param_table_pop_sex$Linf
+          for (ind in unique(indiv_data_sex_pop$id)) {
+            records<-indiv_data_sex_pop[indiv_data_sex_pop$id==ind,]
+            records$age_est[1]<-
+              (-log(((records$Linf[1]*Met_size/records$svl1[1])-Met_size)/(records$Linf[1]-Met_size))/records$k[1])/365
+            if (nrow(records) > 1) {
+              for (row in 2:nrow(records)) {
+                records$age_est[row]<-records$age_est[row-1]+(records$date1[row]-records$date1[row-1])/365
+              }
+            }
+            indiv_observed_data<-rbind(indiv_observed_data,records)
+          }
+        }
+        
         for (i in 1:length(L2)) {
           
           val <- Linf*L1/(L1+(Linf-L1)*exp(-k*1))
@@ -246,16 +272,23 @@ for (sp in unique(allparam_table$Species)) {
         indiv_data_sex_pop<-indiv_data[indiv_data$pop==p & indiv_data$sex==s,
                                        c("species","Model","pop","sex","id",
                                          "date1","date2","d","t1","t2",
-                                         "svl1","svl2","Linf..Intercept.",
+                                         "svl1","svl2",
                                          "Linf","k","st","std")]
         
         if (nrow(indiv_data_sex_pop)>0) {
           indiv_data_sex_pop$k<-k
-          indiv_data_sex_pop$Linf<-indiv_data_sex_pop$Linf..Intercept.
-          indiv_data_sex_pop$age_est_t1<-
-            (-log((indiv_data_sex_pop$Linf-indiv_data_sex_pop$svl1)/(indiv_data_sex_pop$Linf-Met_size)))/indiv_data_sex_pop$k
-          indiv_data_sex_pop$age_est<-(indiv_data_sex_pop$age_est_t1+indiv_data_sex_pop$d)/365
-          indiv_data_sex_pop<-subset(indiv_data_sex_pop, select=-c(Linf..Intercept.,age_est_t1))
+          indiv_data_sex_pop$Linf<-param_table_pop_sex$Linf
+          for (ind in unique(indiv_data_sex_pop$id)) {
+            records<-indiv_data_sex_pop[indiv_data_sex_pop$id==ind,]
+            records$age_est[1]<-
+              ((-log((records$Linf[1]-records$svl1[1])/(records$Linf[1]-Met_size)))/records$k[1])/365
+            if (nrow(records) > 1) {
+              for (row in 2:nrow(records)) {
+                records$age_est[row]<-records$age_est[row-1]+(records$date1[row]-records$date1[row-1])/365
+              }
+            }
+           indiv_observed_data<-rbind(indiv_observed_data,records)
+          }
         }
         
         for (i in 1:length(L2)) {
@@ -274,7 +307,6 @@ for (sp in unique(allparam_table$Species)) {
         
       }
       
-      indiv_observed_data<-rbind(indiv_observed_data,indiv_data_sex_pop)
       graph_dataset$L2<-L2
       graph_dataset$L2_lower<-L2_lower
       graph_dataset$L2_upper<-L2_upper
@@ -286,7 +318,7 @@ for (sp in unique(allparam_table$Species)) {
   }
 
 }
-  
+
 write.csv(indiv_observed_data, "indiv_observed_data.csv", row.names=F)
 write.csv(graph_dataset_all, "graph_dataset_all.csv", row.names=F)
 
@@ -326,17 +358,25 @@ for (sp in unique(graph_dataset_all$Species)) {
          main=bquote(italic(.(sp))~.(gsub("_", " ", p))), cex.main=2.5, cex.lab=2)
     axis(1, lwd=1.3,cex.axis=1.5)
     axis(2, las=2, lwd=1.3,cex.axis=1.5)
-    points(observed_females$age_est,observed_females$svl2, col=alpha("firebrick",0.4),cex=2,pch=16)
-    points(observed_males$age_est,observed_males$svl2, col=alpha("steelblue",0.4),cex=2,pch=16)
-    points(age_certain_others$age,age_certain_others$SVL, col="darkgrey",cex=2,pch=17)
-    points(age_certain_females$age,age_certain_females$SVL, col="firebrick1",cex=2,pch=17)
-    points(age_certain_males$age,age_certain_males$SVL, col="blue",cex=2,pch=17)
+    for (ind in observed_females$id) {
+      lines(observed_females[observed_females$id==ind,]$age_est,observed_females[observed_females$id==ind,]$svl1,
+             col=alpha("firebrick",0.1),cex=2,pch=16, lwd=2.5)
+    }
+    points(observed_females$age_est,observed_females$svl1, col=alpha("firebrick",0.4),cex=2,pch=16)
+    for (ind in observed_males$id) {
+      lines(observed_males[observed_males$id==ind,]$age_est,observed_males[observed_males$id==ind,]$svl1,
+            col=alpha("steelblue",0.1),cex=2,pch=16, lwd=2.5)
+    }
+    points(observed_males$age_est,observed_males$svl1, col=alpha("steelblue",0.4),cex=2,pch=16)
     lines(males$Years,males$L2, type="l", col="steelblue", lwd=5)
     lines(females$Years,females$L2, type="l", col="firebrick", lwd=5)
     lines(males$Years,males$L2_lower, type="l", col="steelblue", lty=3, lwd=4)
     lines(males$Years,males$L2_upper, type="l", col="steelblue", lty=3, lwd=4)
     lines(females$Years,females$L2_lower, type="l", col="firebrick", lty=3, lwd=4)
     lines(females$Years,females$L2_upper, type="l", col="firebrick", lty=3, lwd=4)
+    points(age_certain_others$age,age_certain_others$SVL, col="darkgrey",cex=2,pch=17)
+    points(age_certain_females$age,age_certain_females$SVL, col="firebrick1",cex=2,pch=17)
+    points(age_certain_males$age,age_certain_males$SVL, col="blue",cex=2,pch=17)
     legend(x="bottomright", legend=c(paste(unique(graph_dataset_sp$Sex),"s",sep=""),"Juveniles/Unknown sex"),
            col=c("firebrick","steelblue","darkgrey"),pch=16, bty="n",cex=2)
     
@@ -372,5 +412,16 @@ colnames(recap_estimates)[colnames(recap_estimates) == 'L2'] <- 'SVL_pred'
 colnames(recap_estimates)[colnames(recap_estimates) == 'L2_lower'] <- 'SVL_pred_lower'
 colnames(recap_estimates)[colnames(recap_estimates) == 'L2_upper'] <- 'SVL_pred_upper'
 recap_estimates<-merge(recap_estimates,allparam_subset, by=c("Species","Pop","Sex"))
+
+for (sp in unique(recap_estimates$Species)) {
+  males<-recap_estimates[recap_estimates$Species==sp & recap_estimates$Sex=="Male",c(4:ncol(recap_estimates))]
+  rownames(males) <- NULL
+  females<-recap_estimates[recap_estimates$Species==sp & recap_estimates$Sex=="Female",c(4:ncol(recap_estimates))]
+  rownames(females) <- NULL
+  if (identical(males,females)) {
+    recap_estimates<-recap_estimates[!(recap_estimates$Species==sp & recap_estimates$Sex=="Male"),]
+    recap_estimates[recap_estimates$Species==sp, "Sex"] <- "Male/Female"
+  }
+}
 
 write.csv(recap_estimates, "recaptures_estimates.csv", row.names=F)
