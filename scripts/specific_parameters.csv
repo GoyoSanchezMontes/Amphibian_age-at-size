@@ -1,11 +1,11 @@
 species,neg_gr_thr,max_dsvl_thr,min_temp_thr,Met_size,tmax,Linf_init,k_init,C_init,ts_init,max_size_age,models_to_test,exclude_juvs,exclude_unknown_sex,knownage_pops,knownage_sex,modelpred,refpop
-Alytes cisternasii,-3,,,23,6570,45,0.002,500,600,5,VB+Logistic,yes,yes,separated,pooled,recaptures,Gravera
-Alytes obstetricans,-3,,,16,6570,45,0.002,500,600,10,VB+Logistic,yes,yes,pooled,pooled,knownage,pooled
-Bufo spinosus,-3,,,11,6570,110,0.002,500,500,5,VB+Logistic,yes,yes,separated,males,recaptures,Fuente_del_Valle
-Epidalea calamita,-3,,,14,6570,80,0.002,500,600,15,VB+Logistic,yes,yes,pooled,pooled,recaptures,Laguna
-Discoglossus galganoi,-3,,,22,3650,78,0.002,500,600,7,VB+Logistic,yes,yes,separated,,,
-Hyla molleri,-2,,,22,2555,55,0.002,500,600,5,VB+Logistic,yes,yes,pooled,males,recaptures,Laguna
-Pelobates cultripes,-3,5,100,33,6570,90,0.002,500,600,15,VB+Logistic,yes,yes,pooled,,recaptures,Laguna
-Pleurodeles waltl,-3,,,41,9125,125,0.002,500,600,15,VB+Logistic,yes,yes,pooled,pooled,knownage,pooled
-Pelophylax perezi,-3,,,25,3650,70,0.002,500,600,7,VB+Logistic,yes,yes,pooled,males+females,knownage,pooled
-Triturus marmoratus,-3,,,28,5475,80,0.002,500,600,15,VB+Logistic,yes,yes,separated,,,
+Alytes cisternasii,-3,,,23,6570,45,0.002,500,600,8,VB+Logistic,yes,yes,Separated,Pooled,recaptures,Gravera
+Alytes obstetricans,-3,,,16,6570,45,0.002,500,600,8,VB+Logistic,yes,yes,Pooled,Pooled,knownage,Pooled
+Bufo spinosus,-3,,,11,6570,110,0.002,500,500,12,VB+Logistic,yes,yes,Separated,Male,recaptures,Fuente_del_Valle
+Discoglossus galganoi,-3,,,22,3650,78,0.002,500,600,7,VB+Logistic,yes,yes,Separated,,,
+Epidalea calamita,-3,,,14,6570,80,0.002,500,600,15,VB+Logistic,yes,yes,Pooled,Pooled,recaptures,Laguna
+Hyla molleri,-2,,,22,2555,55,0.002,500,600,5,VB+Logistic,yes,yes,Pooled,Male,recaptures,Laguna
+Pelobates cultripes,-3,5,100,33,6570,90,0.002,500,600,20,VB+Logistic,yes,yes,Pooled,,recaptures,Laguna
+Pelophylax perezi,-3,,,25,3650,70,0.002,500,600,8,VB+Logistic,yes,yes,Pooled,Male+Female,knownage,Pooled
+Pleurodeles waltl,-3,,,41,9125,125,0.002,500,600,20,VB+Logistic,yes,yes,Pooled,Pooled,knownage,Pooled
+Triturus marmoratus,-3,,,28,5475,80,0.002,500,600,15,VB+Logistic,yes,yes,Separated,,,
