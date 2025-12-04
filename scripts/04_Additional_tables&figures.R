@@ -39,6 +39,19 @@ agepred <- data.frame(
   stringsAsFactors = FALSE
 )
 
+# Ensemble the data frame with the asymptotic body size estimates each species
+
+asympt_size <- data.frame(
+  Species = rep(unique(param[param$modelpred!="","species"]),2),
+  Sex = c(rep("Male",length(unique(param[param$modelpred!="","species"]))),
+          rep("Female",length(unique(param[param$modelpred!="","species"])))),
+  age_days = "Inf",
+  SVL_pred = NA,
+  SVL_pred_lower = NA,
+  SVL_pred_upper = NA,
+  stringsAsFactors = FALSE
+)
+
 for (sp in unique(param[param$modelpred!="","species"])) {
   
   if (param[param$species==sp,"modelpred"]=="recaptures") {
@@ -47,7 +60,24 @@ for (sp in unique(param[param$modelpred!="","species"])) {
                    recap_estimates[recap_estimates$Species==sp & recap_estimates$Pop==param[param$species==sp,"refpop"],
                     c("Species","Sex","age_days","SVL_pred",
                       "SVL_pred_lower","SVL_pred_upper")])
-    
+
+    for (s in c("Male", "Female")) {
+      asympt_size[asympt_size$Species==sp & asympt_size$Sex==s,"SVL_pred"] <-
+        round(unique(recap_estimates[recap_estimates$Species==sp & 
+                                 (recap_estimates$Sex==s | recap_estimates$Sex=="Male/Female" | recap_estimates$Sex=="Pooled") &
+                                 recap_estimates$Pop==param[param$species==sp,"refpop"],"Linf"]),0)
+      asympt_size[asympt_size$Species==sp & asympt_size$Sex==s,"SVL_pred_lower"] <-
+        round(unique(recap_estimates[recap_estimates$Species==sp & 
+                                 (recap_estimates$Sex==s | recap_estimates$Sex=="Male/Female" | recap_estimates$Sex=="Pooled") &
+                                 recap_estimates$Pop==param[param$species==sp,"refpop"],"Linf_lower"]),0)
+      asympt_size[asympt_size$Species==sp & asympt_size$Sex==s,"SVL_pred_upper"] <-
+        round(unique(recap_estimates[recap_estimates$Species==sp & 
+                                 (recap_estimates$Sex==s | recap_estimates$Sex=="Male/Female" | recap_estimates$Sex=="Pooled") &
+                                 recap_estimates$Pop==param[param$species==sp,"refpop"],"Linf_upper"]),0)
+    } 
+    if (length(unique(recap_estimates[recap_estimates$Species==sp,"Sex"]))==1){
+      asympt_size[asympt_size$Species==sp,"Sex"]<-unique(recap_estimates[recap_estimates$Species==sp,"Sex"])
+    }
   }
   
   else if (param[param$species==sp,"modelpred"]=="knownage") {
@@ -57,6 +87,23 @@ for (sp in unique(param[param$modelpred!="","species"])) {
                        c("Species","Sex","age_days","SVL_pred",
                          "SVL_pred_lower","SVL_pred_upper")])
     
+    for (s in c("Male", "Female")) {
+      asympt_size[asympt_size$Species==sp & asympt_size$Sex==s,"SVL_pred"] <-
+        round(unique(Knownage_estimates[Knownage_estimates$Species==sp & 
+                                 (Knownage_estimates$Sex==s | Knownage_estimates$Sex=="Male/Female" | 
+                                    Knownage_estimates$Sex=="Pooled"),"Linf"]),0)
+      asympt_size[asympt_size$Species==sp & asympt_size$Sex==s,"SVL_pred_lower"] <-
+        round(unique(Knownage_estimates[Knownage_estimates$Species==sp & 
+                                 (Knownage_estimates$Sex==s | Knownage_estimates$Sex=="Male/Female" | 
+                                    Knownage_estimates$Sex=="Pooled"),"Linf_lower"]),0)
+      asympt_size[asympt_size$Species==sp & asympt_size$Sex==s,"SVL_pred_upper"] <-
+        round(unique(Knownage_estimates[Knownage_estimates$Species==sp & 
+                                 (Knownage_estimates$Sex==s | Knownage_estimates$Sex=="Male/Female" | 
+                                    Knownage_estimates$Sex=="Pooled"),"Linf_upper"]),0)
+    }
+    if (length(unique(Knownage_estimates[Knownage_estimates$Species==sp,"Sex"]))==1){
+      asympt_size[asympt_size$Species==sp,"Sex"]<-unique(Knownage_estimates[Knownage_estimates$Species==sp,"Sex"])
+    }
   }
 }
 
@@ -65,6 +112,46 @@ agepred[agepred$SVL_pred_lower<0,"SVL_pred_lower"]<-0
 agepred$SVL_pred_lower<-round(agepred$SVL_pred_lower,0)
 agepred$SVL_pred_upper<-round(agepred$SVL_pred_upper,0)
 agepred$age_years<-round(agepred$age_days/365,0)
+asympt_size$age_years<-"Asymp"
+asympt_size<-unique(asympt_size)
+
+asympt_size<-rbind(asympt_size,agepred)
+
+
+## PLOT (FIG. 2): Age estimates for species
+
+for (sp in unique(asympt_size$Species)) {
+  
+  assign(paste(gsub(" ", "_", sp),"_plot",sep=""), ggplot(asympt_size[asympt_size$Species==sp,]) +
+           aes(x = as.factor(age_years), y = SVL_pred, group = Sex, colour = Sex) +
+           geom_point(position=position_dodge(width=0.6), size=3) +
+           geom_errorbar(aes(ymin = SVL_pred_lower,ymax = SVL_pred_upper), 
+                         position = position_dodge(width=0.6), width=0.5) +
+           labs(title=bquote(italic(.(sp))~"("~.(param[param$species==sp,"modelpred"])~")")) + 
+           theme(legend.position = "none", axis.text=element_text(size=14),
+                 axis.title=element_text(size=17,face="bold"),
+                 plot.title = element_text(size = rel(2))) +
+           xlab("Estimated age (years)") +
+           ylab("SVL (mm)"))
+  
+}
+
+png(filename="Age_estimates_species.png", width = 800, height = 1200)
+grid.arrange(Alytes_cisternasii_plot,Alytes_obstetricans_plot,
+             Bufo_spinosus_plot,Epidalea_calamita_plot,
+             Hyla_molleri_plot, Pelobates_cultripes_plot,
+             Pelophylax_perezi_plot, Pleurodeles_waltl_plot, ncol=2)
+dev.off()
+
+pdf("Age_estimates_species.pdf", width = 800, height = 1200)
+grid.arrange(Alytes_cisternasii_plot,Alytes_obstetricans_plot,
+             Bufo_spinosus_plot,Epidalea_calamita_plot,
+             Hyla_molleri_plot, Pelobates_cultripes_plot,
+             Pelophylax_perezi_plot, Pleurodeles_waltl_plot, ncol=2)
+dev.off()
+
+## PLOT (FIG. 3): Age estimates for individuals
+
 agepred$min_SVL_threshold<-NA
 agepred$max_SVL_threshold<-NA
 for (sp in unique(agepred$Species)) {
@@ -80,33 +167,9 @@ for (sp in unique(agepred$Species)) {
         min(agepred[agepred$Species==sp & agepred$Sex==s & agepred$age_years==a,"SVL_pred_upper"],
             agepred[agepred$Species==sp & agepred$Sex==s & agepred$age_years==a+1,"SVL_pred_lower"])
     }
+    
   }
 }
-
-## PLOT (FIG. 2): Age estimates for species
-
-for (sp in unique(agepred$Species)) {
-  
-  assign(paste(gsub(" ", "_", sp),"_plot",sep=""), ggplot(agepred[agepred$Species==sp,]) +
-           aes(x = age_years, y = SVL_pred, group = Sex, colour = Sex) +
-           geom_point(position=position_dodge(width=0.6), size=3) +
-           geom_errorbar(aes(ymin = SVL_pred_lower,ymax = SVL_pred_upper), 
-                         position = position_dodge(width=0.6), width=0.5) +
-           labs(title=bquote(italic(.(sp)))) + 
-           theme(legend.position = "none", axis.text=element_text(size=14),
-                 axis.title=element_text(size=17,face="bold"),
-                 plot.title = element_text(size = rel(2))) +
-           xlab("Estimated age (years)") +
-           ylab("SVL (mm)"))
-  
-}
-
-png(filename="Age_estimates_species.png", width = 800, height = 1200)
-grid.arrange(Alytes_cisternasii_plot,Alytes_obstetricans_plot,
-             Bufo_spinosus_plot,Epidalea_calamita_plot,
-             Hyla_molleri_plot, Pelobates_cultripes_plot,
-             Pelophylax_perezi_plot, Pleurodeles_waltl_plot, ncol=2)
-dev.off()
 
 agepred<-agepred[agepred$age_years<5,]
 captures$est_age_years<-NA
@@ -126,9 +189,6 @@ for (indiv in unique(captures$ID)) {
       captures[captures$ID==indiv,"years_from_mark"] - min(captures[captures$ID==indiv,"years_from_mark"])
   }
 }
-
-
-## PLOT (FIG. 3): Age estimates for individuals
 
 # Set here the species you want to plot
 for (sp in c("Bufo spinosus", "Hyla molleri", "Pelophylax perezi")) {
